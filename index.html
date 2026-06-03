@@ -56,7 +56,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-100">지휘통제 대시보드</h2>
-                    <p class="text-sm text-slate-400">육군본부 인원 현황판입니다.</p>
+                    <p class="text-sm text-slate-400">지휘 계통 및 핵심 통계 현황판입니다.</p>
                 </div>
             </div>
 
@@ -205,16 +205,13 @@
                 document.getElementById('stat-intern').innerText = internCount + " 명";
                 document.getElementById('stat-vacation').innerText = vacationMembers.length + " 명";
 
-                // 🌟 [대시보드 핵심 지휘부 필터 수정]
-                // 기존 'Sergeant Major of Army' 조건이 누락되었거나 대시보드 그리드 렌더링에 엄격했던 문제를 완벽 분석하여,
-                // 시트에 적힌 Class가 아래 명시된 계급명(주임원사 포함) 중 하나라도 일치하면 대시보드 카드로 즉시 출력되도록 바꿨습니다.
+                // 대시보드 핵심 지휘부 (주임원사 포함 핵심 고위직)
                 const mainPositions = ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major General', 'Major Genaral', 'Brigadier General', 'Sergeant Major of Army'];
                 const leaders = realMembers.filter(m => mainPositions.some(rank => m['Class'].trim().includes(rank)));
                 
                 let commandHtml = "";
                 leaders.forEach(l => {
                     const isSma = l['Class'].includes('Sergeant Major');
-                    // 주임원사인 경우 특별히 세련된 테두리와 그라데이션 배경 및 돋보이는 배지 스타일 적용
                     const borderClass = isSma ? 'border-emerald-500/50 bg-gradient-to-br from-slate-900 to-emerald-950/40 shadow-lg shadow-emerald-950/20' : 'border-slate-800';
                     const badgeClass = isSma ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-slate-800 text-slate-300';
                     
@@ -233,18 +230,17 @@
                 const categories = [
                     { id: "vacation-list", title: "🌴 현재 휴가 중인 인원 (Vacation Info)", list: vacationMembers, isVacation: true },
                     
-                    // 장성급 명단 조건에 'Sergeant Major of Army(주임원사)' 포함 처리
-                    { id: "gen-list", title: "🎖️ 장성급 지휘부 및 핵심 인원 (주임원사 포함)", list: realMembers.filter(m => {
+                    // 1. 장성급 지휘부 및 핵심 인원
+                    { id: "gen-list", title: "🎖️ 장성급 지휘부 및 핵심 인원", list: realMembers.filter(m => {
                         const rank = m['Class'];
                         return ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Major General', 'Brigadier General'].some(r => rank.includes(r));
                     }) },
                     
-                    // 부사관단 명단
-                    { id: "sma-list", title: "🔰 부사관단 명단", list: realMembers.filter(m => {
-                       return ['Sergeant Major of Army'].some(r => rank.includes(r));
-                     }) },
+                    // 🌟 2. [요청 반영] 완전히 분리된 독립 부사관단 명단 테이블
+                    // 계급명에 'Sergeant'가 포함되어 있는 부사관급 인원들을 별도로 필터링하여 분류합니다.
+                    { id: "sma-list", title: "🔰 부사관 (Sergeant Corps)", list: realMembers.filter(m => m['Class'].includes('Sergeant')) },
                     
-                    // 영관급 명단 필터링: 장성이나 부사관 단어는 배제하고 소령/중령/대령만 분류
+                    // 3. 영관급 참모진 명단 (장성급 및 부사관과 완전히 분리되어 겹치지 않음)
                     { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => {
                         const rank = m['Class'];
                         const hasFieldRank = ['Colonel', 'Lieutenant Colonel', 'Major'].some(r => rank.includes(r));
@@ -252,6 +248,7 @@
                         return hasFieldRank && isNotGeneralOrNco;
                     }) },
                     
+                    // 4. 수습 및 교육 참모
                     { id: "intern-list", title: "🌱 수습 및 인턴 (Intern)", list: realMembers.filter(m => m['Position'] === 'Intern' || m['Class'].includes('소위')) }
                 ];
 
