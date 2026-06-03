@@ -236,11 +236,13 @@
                     // 장성급 명단 조건에 'Sergeant Major of Army(주임원사)' 포함 처리
                     { id: "gen-list", title: "🎖️ 장성급 지휘부 및 핵심 인원 (주임원사 포함)", list: realMembers.filter(m => {
                         const rank = m['Class'];
-                        return ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Major General', 'Brigadier General', 'Sergeant Major of Army'].some(r => rank.includes(r));
+                        return ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Major General', 'Brigadier General'].some(r => rank.includes(r));
                     }) },
                     
                     // 부사관단 명단
-                    { id: "sma-list", title: "🔰 부사관단 명단", list: realMembers.filter(m => m['Class'].includes('Sergeant Major of Army')) },
+                    { id: "sma-list", title: "🔰 부사관단 명단", list: realMembers.filter(m => {
+                       return ['Sergeant Major of Army'].some(r => rank.includes(r));
+                     }) },
                     
                     // 영관급 명단 필터링: 장성이나 부사관 단어는 배제하고 소령/중령/대령만 분류
                     { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => {
