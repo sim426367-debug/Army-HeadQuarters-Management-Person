@@ -235,9 +235,6 @@
                         return ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Major General', 'Brigadier General', 'Sergeant Major of Army'].some(r => rank.includes(r));
                     }) },
                     
-                    // 부사관단 명단
-                    { id: "sma-list", title: "🔰 부사관단 명단", list: realMembers.filter(m => m['Class'].includes('Sergeant Major of Army')) },
-                    
                     // 🌟 [중복 전면 제거] 영관급 명단 필터링: 계급 이름에 Colonel, Colonel, Major를 포함하면서 '장성(General)' 문구와 '부사관(Sergeant)' 문구는 완전히 철저히 배제
                     { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => {
                         const rank = m['Class'];
