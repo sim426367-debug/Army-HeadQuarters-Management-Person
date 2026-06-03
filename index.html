@@ -44,7 +44,7 @@
         </div>
         <div class="p-6 border-t border-slate-800 text-center">
             <button onclick="location.reload()" class="text-xs text-slate-400 hover:text-white bg-slate-800 px-3 py-1.5 rounded-md border border-slate-700 w-full transition-all">
-                <i class="fa-solid fa-sync mr-1"></i> 데이터 실시간 동기화
+                <i class="fa-solid fa-sync mr-1"></i> 데이터 수동 동기화
             </button>
             <p class="text-[10px] text-slate-500 mt-3">"더 강한 육군, 자랑스러운 육군"</p>
         </div>
@@ -56,7 +56,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-100">지휘통제 대시보드</h2>
-                    <p class="text-sm text-slate-400">수뇌부와 육군본부 인원을 표시한 현황판입니다.</p>
+                    <p class="text-sm text-slate-400">육군본부 인사현황판입니다.</p>
                 </div>
             </div>
 
@@ -70,7 +70,7 @@
                     <p id="stat-active" class="text-2xl font-bold text-emerald-400 mt-2">- 명</p>
                 </div>
                 <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">수습 인원</p>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">수습 및 인턴</p>
                     <p id="stat-intern" class="text-2xl font-bold text-blue-400 mt-2">- 명</p>
                 </div>
                 <div class="bg-slate-900 p-5 rounded-xl border border-amber-500/30 bg-amber-950/10">
@@ -98,7 +98,7 @@
 
         <div id="tab-discipline" class="tab-content space-y-6 hidden">
             <div>
-                <h2 class="text-2xl font-bold text-slate-100">경고 및 블랙리스트</h2>
+                <h2 class="text-2xl font-bold text-slate-100">경고 및 벤 관리 시스템</h2>
                 <p class="text-sm text-slate-400">경고 처분 참모진 및 영구 제명 처리된 블랙리스트 통합 내역입니다.</p>
             </div>
 
@@ -112,7 +112,7 @@
 
             <div class="bg-slate-900 rounded-xl border border-red-500/20 overflow-hidden">
                 <div class="bg-red-950/20 px-5 py-4 border-b border-red-500/20">
-                    <h3 class="font-bold text-red-400"><i class="fa-solid fa-skull-crossbones mr-2"></i>🚨 영구 블랙리스트 (벤처리)</h3>
+                    <h3 class="font-bold text-red-400"><i class="fa-solid fa-skull-crossbones mr-2"></i>🚨 영구 블랙리스트 (제명 처리)</h3>
                 </div>
                 <div class="p-5 space-y-4" id="blacklist-container">
                     </div>
@@ -127,7 +127,8 @@
         const GOOGLE_SHEET_WARNING_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZ2WE8FHKR0GlTTEtnbl4sffb-Wss5vRjGZS9Au-kzZFs13-q7lxZYgz7Jj6L6zMKlUXzdrBQhhXkP/pub?gid=1910468777&single=true&output=csv";
         const GOOGLE_SHEET_BLACKLIST_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZ2WE8FHKR0GlTTEtnbl4sffb-Wss5vRjGZS9Au-kzZFs13-q7lxZYgz7Jj6L6zMKlUXzdrBQhhXkP/pub?gid=607228865&single=true&output=csv";
 
-        // 철저한 따옴표 예외 처리를 지원하는 표준 CSV 파싱 함수
+
+        // CSV 파싱 함수
         function parseCSV(text) {
             const lines = text.split('\n').map(line => line.trim()).filter(line => line);
             let headerIndex = -1;
@@ -170,17 +171,15 @@
             return results;
         }
 
-        // 대시보드 로드 및 빌드 메인 비동기 프로세스
+        // 대시보드 로드
         async function initDashboard() {
             try {
-                // 안전장치 검사문
                 if(GOOGLE_SHEET_MEMBER_URL.startsWith("여기에")) {
                     alert("구글 스프레드시트 웹 게시 URL이 치환되지 않았습니다. 코드 주소를 수정해 주셔야 실시간 데이터가 출력됩니다.");
                     document.getElementById('loader').classList.add('hidden');
                     return;
                 }
 
-                // 깃허브 캐시 방지 처리(Cache-Busting) 주소 결합하여 데이터를 항상 실시간 강제 새로고침
                 const timestamp = new Date().getTime();
                 const [resMem, resWarn, resBlack] = await Promise.all([
                     fetch(GOOGLE_SHEET_MEMBER_URL + "&t=" + timestamp).then(r => r.text()),
@@ -192,11 +191,8 @@
                 const warnings = parseCSV(resWarn);
                 const blacklists = parseCSV(resBlack);
 
-                // '공석' 명단 및 불필요한 행 데이터 완벽 차단 필터
                 const realMembers = members.filter(m => m['Roblox nickname'] && m['Roblox nickname'] !== '공석' && m['Roblox nickname'].trim() !== '');
 
-                // 🌴 [휴가 인원 완벽 수정 필터]
-                // '해당사항 없음', '0', '업무', '공석' 같은 일반 데이터 문구는 가려내고 실제 정보가 있는 인원만 적재합니다.
                 const vacationMembers = realMembers.filter(m => {
                     const vac = m['Vacation'] ? m['Vacation'].trim() : '';
                     return vac !== '' && vac !== '해당사항 없음' && vac !== '0' && vac !== '공석' && vac !== '업무';
@@ -204,13 +200,11 @@
 
                 const internCount = realMembers.filter(m => m['Position'] === 'Intern' || m['Class'].includes('소위')).length;
 
-                // 1. 대시보드 상단 수치 카드 세팅
                 document.getElementById('stat-total').innerText = realMembers.length + " 명";
                 document.getElementById('stat-active').innerText = realMembers.filter(m => m['Position'] !== 'Intern' && !m['Class'].includes('소위')).length + " 명";
                 document.getElementById('stat-intern').innerText = internCount + " 명";
                 document.getElementById('stat-vacation').innerText = vacationMembers.length + " 명";
 
-                // 2. 대시보드 핵심 지휘부 그리드 배열 생성 (주임원사 클래스 완전 포함 고정)
                 const mainPositions = ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Sergeant Major of Army'];
                 const leaders = realMembers.filter(m => mainPositions.some(rank => m['Class'].includes(rank)));
                 
@@ -230,14 +224,26 @@
                 });
                 document.getElementById('command-grid').innerHTML = commandHtml || "<p class='text-sm text-slate-500'>최고 지휘부 명단 데이터를 분석할 수 없습니다.</p>";
 
-                // 3. 참모 인사 명단 탭 세부 카테고리 구성 (휴가자 전용 테이블 및 부사관 주임원사 테이블 연계)
+                // 🌟 [수정된 핵심 필터 로직] 
                 let tableHtml = "";
                 const categories = [
                     { id: "vacation-list", title: "🌴 현재 휴가 중인 인원 (Vacation Info)", list: vacationMembers, isVacation: true },
-                    { id: "gen-list", title: "🎖️ 장성급 지휘부 명단", list: realMembers.filter(m => ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Brigadier General'].some(r => m['Class'].includes(r))) },
-                    { id: "sma-list", title: "🔰 육군본부 주임원사", list: realMembers.filter(m => m['Class'].includes('Sergeant Major of Army')) },
-                    { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => ['Colonel', 'Lieutenant Colonel', 'Major'].some(r => m['Class'].includes(r))) },
-                    { id: "intern-list", title: "🌱 수습 및 인턴 (Intern)", list: realMembers.filter(m => m['Position'] === 'Intern' || m['Class'].includes('소위')) }
+                    
+                    // 장성급 필터 (Major Genaral 오타 감안하여 함께 포함)
+                    { id: "gen-list", title: "🎖️ 장성급 지휘부 명단", list: realMembers.filter(m => ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Major General', 'Brigadier General'].some(r => m['Class'].includes(r))) },
+                    
+                    // 부사관단 필터
+                    { id: "sma-list", title: "🔰 육군본부주임원사", list: realMembers.filter(m => m['Class'].includes('Sergeant Major of Army')) },
+                    
+                    // 영관급 필터: 계급에 영관급 단어가 있으면서, '장군(General, Genaral)'이나 '원사(Sergeant)' 단어는 없는 사람만 엄격하게 필터링!
+                    { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => {
+                        const rank = m['Class'];
+                        const hasFieldRank = ['Colonel', 'Lieutenant Colonel', 'Major'].some(r => rank.includes(r));
+                        const isNotGeneralOrNco = !['General', 'Genaral', 'Sergeant'].some(r => rank.includes(r));
+                        return hasFieldRank && isNotGeneralOrNco;
+                    }) },
+                    
+                    { id: "intern-list", title: "🌱 수습 인원 (Intern)", list: realMembers.filter(m => m['Position'] === 'Intern' || m['Class'].includes('소위')) }
                 ];
 
                 categories.forEach(cat => {
@@ -274,7 +280,7 @@
                 });
                 document.getElementById('personnel-tables-container').innerHTML = tableHtml;
 
-                // 4. 기강 경고 부과 명단 파싱
+                // 4. 기강 경고 명단
                 const activeWarns = warnings.filter(w => w['Warnig Count'] && w['Warnig Count'] !== 'Not have Warning' && w['Roblox nickname'] !== '공석' && w['Roblox nickname'].trim() !== '');
                 let warnHtml = "";
                 if(activeWarns.length === 0) {
@@ -297,7 +303,7 @@
                 }
                 document.getElementById('warning-container').innerHTML = warnHtml;
 
-                // 5. 불명예 블랙리스트 명단 파싱
+                // 5. 블랙리스트 명단
                 const blackPeople = blacklists.filter(b => b['Roblox nickname'] && b['Reason'] && b['Roblox nickname'] !== '공석' && b['Roblox nickname'].trim() !== '');
                 let blackHtml = "";
                 if(blackPeople.length === 0) {
@@ -320,7 +326,6 @@
                 }
                 document.getElementById('blacklist-container').innerHTML = blackHtml;
 
-                // 동기화 차단 해제
                 document.getElementById('loader').classList.add('hidden');
 
             } catch (error) {
@@ -330,7 +335,6 @@
             }
         }
 
-        // 탭 인터페이스 핸들러
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById('tab-' + tabId).classList.remove('hidden');
@@ -344,7 +348,6 @@
             activeBtn.classList.add('bg-emerald-600', 'text-white');
         }
 
-        // 웹브라우저 창 준비 시 즉각 실행
         window.onload = initDashboard;
     </script>
 </body>
