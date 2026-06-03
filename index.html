@@ -44,7 +44,7 @@
         </div>
         <div class="p-6 border-t border-slate-800 text-center">
             <button onclick="location.reload()" class="text-xs text-slate-400 hover:text-white bg-slate-800 px-3 py-1.5 rounded-md border border-slate-700 w-full transition-all">
-                <i class="fa-solid fa-sync mr-1"></i> 데이터 수동 동기화
+                <i class="fa-solid fa-sync mr-1"></i> 데이터 강제 동기화
             </button>
             <p class="text-[10px] text-slate-500 mt-3">"더 강한 육군, 자랑스러운 육군"</p>
         </div>
@@ -56,7 +56,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-100">지휘통제 대시보드</h2>
-                    <p class="text-sm text-slate-400">육군본부 인사현황판입니다.</p>
+                    <p class="text-sm text-slate-400">육군본부 현인원 현황판입니다.</p>
                 </div>
             </div>
 
@@ -98,13 +98,13 @@
 
         <div id="tab-discipline" class="tab-content space-y-6 hidden">
             <div>
-                <h2 class="text-2xl font-bold text-slate-100">경고 및 벤 관리 시스템</h2>
-                <p class="text-sm text-slate-400">경고 처분 참모진 및 영구 제명 처리된 블랙리스트 통합 내역입니다.</p>
+                <h2 class="text-2xl font-bold text-slate-100">기강 및 관리 시스템</h2>
+                <p class="text-sm text-slate-400">경고 처분 참모진 및 영구 벤 처리된 블랙리스트 통합 내역입니다.</p>
             </div>
 
             <div class="bg-slate-900 rounded-xl border border-amber-500/20 overflow-hidden">
                 <div class="bg-amber-950/20 px-5 py-4 border-b border-amber-500/20">
-                    <h3 class="font-bold text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-2"></i>현재 기강 경고 부과 인원</h3>
+                    <h3 class="font-bold text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-2"></i>현재 경고 부과 인원</h3>
                 </div>
                 <div class="p-5 space-y-3" id="warning-container">
                     </div>
@@ -112,7 +112,7 @@
 
             <div class="bg-slate-900 rounded-xl border border-red-500/20 overflow-hidden">
                 <div class="bg-red-950/20 px-5 py-4 border-b border-red-500/20">
-                    <h3 class="font-bold text-red-400"><i class="fa-solid fa-skull-crossbones mr-2"></i>🚨 영구 블랙리스트 (제명 처리)</h3>
+                    <h3 class="font-bold text-red-400"><i class="fa-solid fa-skull-crossbones mr-2"></i>🚨 영구 블랙리스트 (벤 처리)</h3>
                 </div>
                 <div class="p-5 space-y-4" id="blacklist-container">
                     </div>
@@ -224,18 +224,21 @@
                 });
                 document.getElementById('command-grid').innerHTML = commandHtml || "<p class='text-sm text-slate-500'>최고 지휘부 명단 데이터를 분석할 수 없습니다.</p>";
 
-                // 🌟 [수정된 핵심 필터 로직] 
+                // 명단 테이블 렌더링 세팅
                 let tableHtml = "";
                 const categories = [
                     { id: "vacation-list", title: "🌴 현재 휴가 중인 인원 (Vacation Info)", list: vacationMembers, isVacation: true },
                     
-                    // 장성급 필터 (Major Genaral 오타 감안하여 함께 포함)
-                    { id: "gen-list", title: "🎖️ 장성급 지휘부 명단", list: realMembers.filter(m => ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Major General', 'Brigadier General'].some(r => m['Class'].includes(r))) },
+                    // 🌟 [요청 반영 및 수정] 장성급 명단 조건에 'Sergeant Major of Army(주임원사)'를 결합하여 포함 처리
+                    { id: "gen-list", title: "🎖️ 장성급 지휘부 및 핵심 인원 (주임원사 포함)", list: realMembers.filter(m => {
+                        const rank = m['Class'];
+                        return ['President', 'Prime Minister', 'General', 'Lieutenant General', 'Major Genaral', 'Major General', 'Brigadier General', 'Sergeant Major of Army'].some(r => rank.includes(r));
+                    }) },
                     
-                    // 부사관단 필터
-                    { id: "sma-list", title: "🔰 육군본부주임원사", list: realMembers.filter(m => m['Class'].includes('Sergeant Major of Army')) },
+                    // 부사관단 명단
+                    { id: "sma-list", title: "🔰 부사관단 명단", list: realMembers.filter(m => m['Class'].includes('Sergeant Major of Army')) },
                     
-                    // 영관급 필터: 계급에 영관급 단어가 있으면서, '장군(General, Genaral)'이나 '원사(Sergeant)' 단어는 없는 사람만 엄격하게 필터링!
+                    // 🌟 [중복 전면 제거] 영관급 명단 필터링: 계급 이름에 Colonel, Colonel, Major를 포함하면서 '장성(General)' 문구와 '부사관(Sergeant)' 문구는 완전히 철저히 배제
                     { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => {
                         const rank = m['Class'];
                         const hasFieldRank = ['Colonel', 'Lieutenant Colonel', 'Major'].some(r => rank.includes(r));
@@ -243,7 +246,7 @@
                         return hasFieldRank && isNotGeneralOrNco;
                     }) },
                     
-                    { id: "intern-list", title: "🌱 수습 인원 (Intern)", list: realMembers.filter(m => m['Position'] === 'Intern' || m['Class'].includes('소위')) }
+                    { id: "intern-list", title: "🌱 수습 및 인턴 (Intern)", list: realMembers.filter(m => m['Position'] === 'Intern' || m['Class'].includes('소위')) }
                 ];
 
                 categories.forEach(cat => {
