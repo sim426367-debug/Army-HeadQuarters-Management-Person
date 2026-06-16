@@ -238,7 +238,7 @@
                     
                     // 🌟 2. [요청 반영] 완전히 분리된 독립 부사관단 명단 테이블
                     // 계급명에 'Sergeant'가 포함되어 있는 부사관급 인원들을 별도로 필터링하여 분류합니다.
-                    { id: "sma-list", title: "🔰 주임원사 (Sergeant Corps)", list: realMembers.filter(m => m['Class'].includes('Sergeant Major of Army')) },
+                    { id: "sma-list", title: "🔰 주임원사 (Sergeant Corps)", list: realMembers.filter(m => m['Class'].includes('Sergeant Major')) },
                     
                     // 3. 영관급 참모진 명단 (장성급 및 부사관과 완전히 분리되어 겹치지 않음)
                     { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => {
