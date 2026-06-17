@@ -241,7 +241,7 @@
                     { id: "sma-list", title: "🔰 주임원사 (Sergeant Corps)", list: realMembers.filter(m => m['Class'].includes('Sergeant Major')) },
                     
                     // 3. 영관급 참모진 명단 (장성급 및 부사관과 완전히 분리되어 겹치지 않음)
-                    { id: "col-list", title: "🔹 영관급 참모진 명단", list: realMembers.filter(m => {
+                    { id: "col-list", title: "🔹 영관 및 위관급 참모진 명단", list: realMembers.filter(m => {
                         const rank = m['Class'];
                         const hasFieldRank = ['Colonel', 'Lieutenant Colonel', 'Major', 'Captain', 'Lieutenant', 'Second Lieutenant'].some(r => rank.includes(r));
                         const isNotGeneralOrNco = !['General', 'Genaral', 'Sergeant'].some(r => rank.includes(r));
